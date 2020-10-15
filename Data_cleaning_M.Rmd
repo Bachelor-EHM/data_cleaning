@@ -1,0 +1,19 @@
+---
+title: "Data Cleaning"
+author: "Matilde Jacobsen"
+date: "10/12/2020"
+output: pdf_document
+---
+
+#Importing packages
+
+```{r}
+
+```
+
+#Load data
+
+```{r}
+
+```
+

@@ -1,0 +1,83 @@
+---
+title: "Data Cleaning"
+author: "Matilde Jacobsen"
+date: "10/12/2020"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+#Importing packages
+
+```{r}
+pacman::p_load(tidyverse, jsonlite, rjson)
+
+
+RStudio.Version()
+```
+
+#Load data
+To do: Make a loop for loading the logfiles
+```{r}
+dataPath <- 'logfiles/'
+fileID <- 'session'
+
+dataFile <- paste(dataPath,fileID,".json",sep="")
+d1 <- jsonlite::fromJSON(dataFile, flatten=T) 
+d1 <- d1 %>% 
+  select(c(-previous_color_chain,id)) %>% 
+  mutate_at(vars(condition), ~replace_na(., 1)) %>% 
+  mutate_at(vars(condition_label), ~replace_na(., "Naming transmission"))
+d2 <- jsonlite::fromJSON(paste(dataPath,"session2",".json",sep=""), flatten=T) 
+d2 <- d2 %>% 
+  select(c(-previous_color_chain,id)) %>% 
+  mutate_at(vars(condition), ~replace_na(., 1)) %>% 
+  mutate_at(vars(condition_label), ~replace_na(., "Naming transmission"))
+
+df_all <- rbind(d1, d2)
+
+```
+
+#Cleaning columns
+Renaming columns
+To do: discuss wich and to what
+
+```{r}
+#Renaming columns
+df_all <- df_all %>% 
+  rename(chain = info.chain,
+         subject = info.subject,
+         generation = info.generation,
+         language = info.language)
+```
+
+#Making color matching df
+Filter rows containing color matching and selecting which rows to keep
+NB: how to extract color [object Object]
+
+```{r}
+color_match_df <- df_all %>% 
+  filter(test_part == 'matching') %>% 
+  select(condition, condition_label, duration, subject, chain, generation, language, source_color.h, source_color.s, source_color.l, color.h, color.s, color.l, range_x.0, range_x.1, range_y.0, range_y.1) 
+  
+write_csv(color_match_df, "color_match1.csv")
+
+#insert randon HSL values for exploratory analysis
+color_match_df %>% plot(saturation_matched ~ generation)
+
+```
+
+#Making color naming df
+
+```{r}
+color_naming_df <- df2 %>% 
+  filter(test_part == 'naming') %>% 
+  select(trial_index, time_elapsed, subject, responses) %>% 
+
+
+
+color_naming_df$responses %>% str_extract(':"(.*)",')
+color_naming_df$responses %>% str_extract(',"(.*)"\\}')
+  
+```
+

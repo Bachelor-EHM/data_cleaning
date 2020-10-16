@@ -1,0 +1,9 @@
+condition,condition_label,duration,subject,chain,generation,language,source_color.h,source_color.s,source_color.l,color.h,color.s,color.l,range_x.0,range_x.1,range_y.0,range_y.1
+1,Naming transmission,3135,qc5d,0,2,English,179,60,50,185,77,50,0,1,0.2,0.9
+1,Naming transmission,3022,qc5d,0,2,English,59,68,50,56,62,50,-0.2,0.7,0.1,0.8
+1,Naming transmission,3233,qc5d,0,2,English,124,57,50,107,64,50,-0.2,0.7,0,0.7
+1,Naming transmission,1523,qc5d,0,2,English,308,69,50,278,90,50,-0.5,0.5,0.3,1
+1,Naming transmission,7037,e539,0,1,English,53,77,50,59,68,50,-0.2,0.7,0.2,0.9
+1,Naming transmission,3236,e539,0,1,English,112,68,50,124,57,50,-0.5,0.5,0,0.7
+1,Naming transmission,7221,e539,0,1,English,170,73,50,179,60,50,-0.7,0.2,0.3,1
+1,Naming transmission,8967,e539,0,1,English,321,67,50,308,69,50,0,1,0.1,0.8

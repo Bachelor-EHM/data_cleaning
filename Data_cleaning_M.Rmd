@@ -10,10 +10,10 @@ editor_options:
 #Importing packages
 
 ```{r}
-pacman::p_load(tidyverse, jsonlite, rjson)
-
+pacman::p_load(tidyverse, jsonlite, rjson, data.table)
 
 RStudio.Version()
+
 ```
 
 #Load data
@@ -23,32 +23,44 @@ dataPath <- 'logfiles/'
 fileID <- 'session'
 
 dataFile <- paste(dataPath,fileID,".json",sep="")
+
 d1 <- jsonlite::fromJSON(dataFile, flatten=T) 
 d1 <- d1 %>% 
   select(c(-previous_color_chain,id)) %>% 
-  mutate_at(vars(condition), ~replace_na(., 1)) %>% 
   mutate_at(vars(condition_label), ~replace_na(., "Naming transmission"))
-d2 <- jsonlite::fromJSON(paste(dataPath,"session2",".json",sep=""), flatten=T) 
+            
+#ifelse(condition == 2, ~replace_na(., "Naming transmission"), ~replace_na(., "No naming transmission")))
+
+d2 <- jsonlite::fromJSON(paste(dataPath,"session2.json",sep=""), flatten=T) 
 d2 <- d2 %>% 
   select(c(-previous_color_chain,id)) %>% 
-  mutate_at(vars(condition), ~replace_na(., 1)) %>% 
   mutate_at(vars(condition_label), ~replace_na(., "Naming transmission"))
 
-df_all <- rbind(d1, d2)
 
-```
+read_files <- function(filename) {
+    # load data
+    file <- jsonlite::fromJSON(paste(dataPath,filename,sep=""), flatten=T)
+    # combine all this data in one dataset
+    data <- rbind(file)
+    return(data)
+}
 
-#Cleaning columns
-Renaming columns
-To do: discuss wich and to what
 
-```{r}
-#Renaming columns
-df_all <- df_all %>% 
-  rename(chain = info.chain,
-         subject = info.subject,
-         generation = info.generation,
-         language = info.language)
+data = dir(dataPath, pattern = "*.json") %>% 
+  purrr::map_df(read_files)
+
+data <- data %>% 
+  select(c(-previous_color_chain,id, condition)) %>%
+  rename(Chain = info.chain,
+         Subject = info.subject,
+         Generation = info.generation,
+         Language = info.language,
+         Condition = info.condition) %>% 
+  mutate(condition_label=
+    case_when(
+      Condition ==2~"Naming transmission" ,
+      Condition ==1~"No naming transmission"))
+
 ```
 
 #Making color matching df
@@ -56,28 +68,21 @@ Filter rows containing color matching and selecting which rows to keep
 NB: how to extract color [object Object]
 
 ```{r}
-color_match_df <- df_all %>% 
+color_match_df <- data %>% 
   filter(test_part == 'matching') %>% 
-  select(condition, condition_label, duration, subject, chain, generation, language, source_color.h, source_color.s, source_color.l, color.h, color.s, color.l, range_x.0, range_x.1, range_y.0, range_y.1) 
+  select(Condition, condition_label, duration, Subject, Chain, Generation, Language, source_color.h, source_color.s, source_color.l, color.h, color.s, color.l, range_x.0, range_x.1, range_y.0, range_y.1) 
   
 write_csv(color_match_df, "color_match1.csv")
-
-#insert randon HSL values for exploratory analysis
-color_match_df %>% plot(saturation_matched ~ generation)
 
 ```
 
 #Making color naming df
 
 ```{r}
-color_naming_df <- df2 %>% 
+color_naming_df <- data %>% 
   filter(test_part == 'naming') %>% 
-  select(trial_index, time_elapsed, subject, responses) %>% 
+  select(condition_label, basic_colors, creative_name, Chain, Generation, Subject, Condition, Language, color_to_name.h, color_to_name.s, color_to_name.l) 
 
 
-
-color_naming_df$responses %>% str_extract(':"(.*)",')
-color_naming_df$responses %>% str_extract(',"(.*)"\\}')
-  
 ```
 

@@ -20,22 +20,6 @@ RStudio.Version()
 To do: Make a loop for loading the logfiles
 ```{r}
 dataPath <- 'logfiles/'
-fileID <- 'session'
-
-dataFile <- paste(dataPath,fileID,".json",sep="")
-
-d1 <- jsonlite::fromJSON(dataFile, flatten=T) 
-d1 <- d1 %>% 
-  select(c(-previous_color_chain,id)) %>% 
-  mutate_at(vars(condition_label), ~replace_na(., "Naming transmission"))
-            
-#ifelse(condition == 2, ~replace_na(., "Naming transmission"), ~replace_na(., "No naming transmission")))
-
-d2 <- jsonlite::fromJSON(paste(dataPath,"session2.json",sep=""), flatten=T) 
-d2 <- d2 %>% 
-  select(c(-previous_color_chain,id)) %>% 
-  mutate_at(vars(condition_label), ~replace_na(., "Naming transmission"))
-
 
 read_files <- function(filename) {
     # load data

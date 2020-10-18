@@ -70,7 +70,7 @@ NB: how to extract color [object Object]
 ```{r}
 color_match_df <- data %>% 
   filter(test_part == 'matching') %>% 
-  select(Condition, condition_label, duration, Subject, Chain, Generation, Language, source_color.h, source_color.s, source_color.l, color.h, color.s, color.l, range_x.0, range_x.1, range_y.0, range_y.1) 
+  select(rt, Condition, condition_label, duration, Subject, Chain, Generation, Language, source_color.h, source_color.s, source_color.l, color.h, color.s, color.l, range_x.0, range_x.1, range_y.0, range_y.1) 
   
 write_csv(color_match_df, "color_match1.csv")
 

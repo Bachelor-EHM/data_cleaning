@@ -54,9 +54,21 @@ NB: how to extract color [object Object]
 ```{r}
 color_match_df <- data %>% 
   filter(test_part == 'matching') %>% 
-  select(rt, Condition, condition_label, duration, Subject, Chain, Generation, Language, source_color.h, source_color.s, source_color.l, color.h, color.s, color.l, range_x.0, range_x.1, range_y.0, range_y.1) 
+  select(rt, Condition, condition_label, duration, Subject, Chain, Generation, Language, source_color.h, source_color.s, source_color.l, color.h, color.s, color.l) 
   
-write_csv(color_match_df, "color_match1.csv")
+write_csv(color_match_df, "color_match.csv")
+color_match_df[1,12]
+
+color_match_df <- color_match_df %>% 
+  group_by(generation, seed_color) %>% 
+  filter(source_color.h) %>% 
+  mutate(dh = min(abs(h_match-h_seed), 360-abs(h_match-h_seed)/180.0))
+
+
+
+h_seed <- color_match_df %>% group_by(generation, seed_color) %>% filter(source_color.h)
+h_match <- color_match_df %>% group_by(generation, seed_color) %>% filter(color.h)
+dh = min(abs(h_match-h_seed), 360-abs(h_match-h_seed)/180.0)
 
 ```
 
@@ -67,6 +79,7 @@ color_naming_df <- data %>%
   filter(test_part == 'naming') %>% 
   select(condition_label, basic_colors, creative_name, Chain, Generation, Subject, Condition, Language, color_to_name.h, color_to_name.s, color_to_name.l) 
 
+write_csv(color_match_df, "color_naming.csv")
 
 ```
 

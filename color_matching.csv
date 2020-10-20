@@ -1,0 +1,13 @@
+rt,Condition,Condition_label,Subject,Chain,Generation,Language,Hue_source,Saturation_source,Lightness_source,Hue_matched,Saturation_matched,Lighness_matched,Color_label_source,Color_label_matched
+10421,2,Naming transmission,w4ha,0,0,English,49.85,60,50,48,56,50,seed mustard,seed mustard
+3246,2,Naming transmission,w4ha,0,0,English,179.34,60,50,184,78,50,seed ocean blue,seed ocean blue
+2197,2,Naming transmission,w4ha,0,0,English,117.98,60,50,102,56,50,seed grass green,seed grass green
+2465,2,Naming transmission,w4ha,0,0,English,327.55,60,50,316,54,50,seed dark rose,seed dark rose
+7753,2,Naming transmission,v5v1,0,1,English,102,56,50,122,67,50,seed grass green,seed grass green
+4581,2,Naming transmission,v5v1,0,1,English,316,54,50,330,48,50,seed dark rose,seed dark rose
+12261,2,Naming transmission,v5v1,0,1,English,184,78,50,193,68,50,seed ocean blue,seed ocean blue
+9238,2,Naming transmission,v5v1,0,1,English,48,56,50,44,76,50,seed mustard,seed mustard
+3213,2,Naming transmission,y8yv,0,2,English,193,68,50,198,90,50,seed ocean blue,seed ocean blue
+6127,2,Naming transmission,y8yv,0,2,English,330,48,50,323,45,50,seed dark rose,seed dark rose
+2155,2,Naming transmission,y8yv,0,2,English,122,67,50,130,64,50,seed grass green,seed grass green
+4595,2,Naming transmission,y8yv,0,2,English,44,76,50,45,57,50,seed mustard,seed mustard

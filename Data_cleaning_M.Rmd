@@ -36,13 +36,21 @@ data = dir(dataPath, pattern = "*.json") %>%
   purrr::map_df(read_files)
 
 data <- data %>% 
-  select(c(-previous_color_chain,id, condition)) %>%
+  select(c(-previous_color_chain,id)) %>%
   rename(Chain = info.chain,
          Subject = info.subject,
          Generation = info.generation,
          Language = info.language,
-         Condition = info.condition) %>% 
-  mutate(condition_label=
+         Condition = info.condition,
+         Hue_source = source_color.h,
+         Saturation_source = source_color.s,
+         Lightness_source = source_color.l,
+         Hue_matched = color.h,
+         Saturation_matched = color.s,
+         Lighness_matched = color.l,
+         Color_label_matched = color.color_label,
+         Color_label_source = source_color.color_label) %>% 
+  mutate(Condition_label=
     case_when(
       Condition ==2~"Naming transmission" ,
       Condition ==1~"Pure transmission"))
@@ -55,7 +63,7 @@ Filter rows containing color matching and selecting which rows to keep
 ```{r}
 color_matching_df <- data %>% 
   filter(test_part == 'matching') %>% 
-  select(rt, Condition, condition_label, duration, Subject, Chain, Generation, Language, source_color.h, source_color.s, source_color.l, color.h, color.s, color.l) 
+  select(rt, Condition, Condition_label, Subject, Chain, Generation, Language, Hue_source, Saturation_source, Lightness_source, Hue_matched, Saturation_matched, Lighness_matched, Color_label_source, Color_label_matched, Language) 
   
 write_csv(color_matching_df, "color_matching.csv")
 
@@ -67,7 +75,7 @@ write_csv(color_matching_df, "color_matching.csv")
 ```{r}
 color_naming_df <- data %>% 
   filter(test_part == 'naming') %>% 
-  select(condition_label, basic_colors, creative_name, Chain, Generation, Subject, Condition, Language, color_to_name.h, color_to_name.s, color_to_name.l) 
+  select(Condition_label, basic_colors, creative_name, Chain, Generation, Subject, Condition, Language, color_to_name.h, color_to_name.s, color_to_name.l) 
 
 write_csv(color_naming_df, "color_naming.csv")
 

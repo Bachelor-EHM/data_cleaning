@@ -126,20 +126,24 @@ fix$Language_spoken <- fix$Participated_before
 fix$Participated_before <- "no"
 #and replacing them 
 allData <- subset(allData, Age!="no")
-allData <- rbind(allDataT, fix)
+allData <- rbind(allData, fix)
 
 ```
 
 #Extractin confidence ratings
 ```{r}
+#Rename color labels to English
 allData <- allData %>% 
   mutate(Color_label_matched = case_when(
           Color_label_matched == "seed sennepsgul" ~ "seed mustard",
           Color_label_matched == "seed græsgrøn" ~ "seed grass green",
           Color_label_matched == "seed havblå" ~ "seed ocean blue",
           Color_label_matched == "seed mørk rosa" ~ "seed dark rose",
+          Color_label_matched == "seed mintgrøn" ~ "seed mint green",
           TRUE ~ Color_label_matched)) %>%
+  #subset(Color_label_matched!="seed mint green") %>% 
   mutate(lagged_label = lag(Color_label_matched, n = 1))
+
 #filtering confidence ratings
 confidence <- allData %>% 
   filter(test_part == 'confidence') %>% 
@@ -151,6 +155,9 @@ confidence <- allData %>%
 confidence$Confidence <- str_replace_all(confidence$Confidence, "..\\bconfidence..", "")
 confidence$Confidence <- str_replace_all(confidence$Confidence, "\\}", "")
 confidence$Confidence <- as.numeric(confidence$Confidence)
+
+#removing test match
+confidence <- subset(confidence, Color_label_matched!="seed mint green")
 
 
 ```
@@ -165,16 +172,16 @@ color_matching <- allData %>%
 
 
 #Add 360 when matched hue is between 0 and 20 
-color_matching$Hue_matched <- as.numeric(color_matching$Hue_matched)
-color_matching$Hue_matched <- case_when(color_matching$Hue_matched < 30 ~ color_matching$Hue_matched + 360,
-                               color_matching$Hue_matched > 30 ~ color_matching$Hue_matched)
-color_matching$Hue_source <- case_when(color_matching$Hue_source < 30 ~ color_matching$Hue_source + 360,
-                               color_matching$Hue_source > 30 ~ color_matching$Hue_source)
+# color_matching$Hue_matched <- as.numeric(color_matching$Hue_matched)
+# color_matching$Hue_matched <- case_when(color_matching$Hue_matched < 30 ~ color_matching$Hue_matched + 360,
+#                                color_matching$Hue_matched > 13 ~ color_matching$Hue_matched)
+# color_matching$Hue_source <- case_when(color_matching$Hue_source < 13 ~ color_matching$Hue_source + 360,
+#                                color_matching$Hue_source > 13 ~ color_matching$Hue_source)
 #Subtract 360 when matched hue is above 360 
-color_matching$Hue_matched <- case_when(color_matching$Hue_matched > 360 ~ color_matching$Hue_matched - 360,
-                               color_matching$Hue_matched < 360 ~ color_matching$Hue_matched)
-color_matching$Hue_source <- case_when(color_matching$Hue_source > 360 ~ color_matching$Hue_source - 360,
-                               color_matching$Hue_source < 360 ~ color_matching$Hue_source)
+# color_matching$Hue_matched <- case_when(color_matching$Hue_matched > 360 ~ color_matching$Hue_matched - 360,
+#                                color_matching$Hue_matched < 360 ~ color_matching$Hue_matched)
+# color_matching$Hue_source <- case_when(color_matching$Hue_source > 360 ~ color_matching$Hue_source - 360,
+#                                color_matching$Hue_source < 360 ~ color_matching$Hue_source)
 
 #Hues of each focal color 
 red <- 12.2 + 360
@@ -186,15 +193,8 @@ red_blue <- 327.55
 yellow_red <- 49.85
 green_yellow <- 117.98
 blue_green <- 179.34
-#Rename color labels to English and add focal wavelengths
+#Add focal hue angles
 color_matching <- color_matching %>% 
-  mutate(Color_label_matched = case_when(
-          Color_label_matched == "seed sennepsgul" ~ "seed mustard",
-          Color_label_matched == "seed græsgrøn" ~ "seed grass green",
-          Color_label_matched == "seed havblå" ~ "seed ocean blue",
-          Color_label_matched == "seed mørk rosa" ~ "seed dark rose",
-          Color_label_matched == "seed mintgrøn" ~ "seed mint green",
-          TRUE ~ Color_label_matched)) %>% 
   mutate(Focal = case_when(
           Color_label_matched == "seed mustard" ~ yellow,
           Color_label_matched == "seed grass green" ~ green,
@@ -217,8 +217,12 @@ color_matching <- color_matching %>%
   mutate(
     Dif = Focal - Hue_matched,
     Rel_dif = 100/(Focal - Seed)*Dif,
-    Accuracy = Hue_source - Hue_matched
+    Accuracy_hue = abs(Hue_source - Hue_matched),
+    Accuracy_sat = abs(Saturation_source - Saturation_matched)
   )
+
+#Adding confidence ratings
+color_matching <- left_join(confidence, color_matching)
 
 #As factors cleaned
 color_matching$Condition <- as.factor(color_matching$Condition)
@@ -231,9 +235,7 @@ color_matching$Language <- as.factor(color_matching$Language)
 color_matching_danish <- color_matching %>% filter(Language == "Danish")
 us <- unique(color_matching$Subject)
 usd <- unique(color_matching_danish$Subject)
-
-#Adding confidence ratings
-color_matching <- left_join(confidence, color_matching)
+levels(color_matching$Color_label_matched)
 
 #Writing the CSV file to directory with date of writing automatically generated
 write.csv(color_matching, file=paste("color_matching",Sys.Date(), sep = "", ".csv"))
@@ -276,5 +278,7 @@ d_reflect <- na.omit(d_reflect)
 
 
 write.csv(d_reflect, file=paste("reflect",Sys.Date(),sep = "", ".csv"))
+
+?count
 ```
 

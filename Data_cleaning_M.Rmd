@@ -188,12 +188,40 @@ red <- 12.2 + 360
 yellow <- 62.4
 green <- 136.5
 blue <- 193.6
+
 #Hues of each seed color 
 red_blue <- 327.55
 yellow_red <- 49.85
 green_yellow <- 117.98
 blue_green <- 179.34
-#Add focal hue angles
+
+#Secondary hues
+purple <- 278
+orange <- 26
+pink <- 4
+brown <- 22
+
+#Calculating deltas
+#red-blue pairs
+red_blue - purple
+327.55-289
+red_blue - red
+(360-327.55)+12.5
+#yellow-red pairs
+yellow_red - orange
+49.85-26
+yellow - yellow_red
+#green-yellow pairs
+green_yellow - yellow
+117.98-62.4
+green - green_yellow
+136.5-117.98
+#blue-green pairs
+blue_green - green #
+179.34-136.5
+blue - blue_green
+
+#Add focal and seed hue angles
 color_matching <- color_matching %>% 
   mutate(Focal = case_when(
           Color_label_matched == "seed mustard" ~ yellow,
@@ -204,7 +232,12 @@ color_matching <- color_matching %>%
           Color_label_matched == "seed mustard" ~ yellow_red,
           Color_label_matched == "seed grass green" ~ green_yellow,
           Color_label_matched == "seed ocean blue" ~ blue_green,
-          Color_label_matched == "seed dark rose" ~ red_blue))
+          Color_label_matched == "seed dark rose" ~ red_blue)) %>% 
+  mutate(Secondary_focal = case_when(
+          Color_label_matched == "seed mustard" ~ orange,
+          Color_label_matched == "seed grass green" ~ yellow,
+          Color_label_matched == "seed ocean blue" ~ green,
+          Color_label_matched == "seed dark rose" ~ purple))
 
 #removing test match
 color_matching <- subset(color_matching, Color_label_matched!="seed mint green")
@@ -216,7 +249,9 @@ color_matching$Seed <- as.numeric(color_matching$Seed)
 color_matching <- color_matching %>% 
   mutate(
     Dif = Focal - Hue_matched,
+    Dif_2 = Hue_matched - Secondary_focal,
     Rel_dif = 100/(Focal - Seed)*Dif,
+    Rel_dif_2 = 100/(Seed - Secondary_focal)*Dif,
     Accuracy_hue = abs(Hue_source - Hue_matched),
     Accuracy_sat = abs(Saturation_source - Saturation_matched)
   )

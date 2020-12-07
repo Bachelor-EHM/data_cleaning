@@ -1,7 +1,7 @@
 ---
 title: "Data Cleaning"
 author: "Matilde Jacobsen"
-date: "10/12/2020"
+date: "created: 10/12/2020, last updated: `r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 editor_options: 
   chunk_output_type: console
@@ -251,7 +251,7 @@ color_matching <- color_matching %>%
     Dif = Focal - Hue_matched,
     Dif_2 = Hue_matched - Secondary_focal,
     Rel_dif = 100/(Focal - Seed)*Dif,
-    Rel_dif_2 = 100/(Seed - Secondary_focal)*Dif,
+    Rel_dif_2 = 100/(Seed - Secondary_focal)*Dif_2,
     Accuracy_hue = abs(Hue_source - Hue_matched),
     Accuracy_sat = abs(Saturation_source - Saturation_matched)
   )

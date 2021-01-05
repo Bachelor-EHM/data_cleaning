@@ -1,2 +1,2 @@
-# data_cleaning
-We can use this ropository to upload data files, create scripts for data cleaning and wrangling, and ultimately export cleaned datasets for analysis
+# Data Cleaning
+The script for creating cleaned dataframes used in the analysis. Raw data can be accessed upon request by the owners of this organization. 

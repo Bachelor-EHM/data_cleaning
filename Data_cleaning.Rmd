@@ -1,0 +1,270 @@
+---
+title: "Data Cleaning"
+author: "MJ, EHS, HM"
+date: "created: 10/12/2020, last updated: `r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+#Importing packages
+
+```{r}
+#Set working directory
+setwd("/Users/matilde/Desktop/AU/Bachelor project/Color_matching/data_cleaning")
+#Load packages
+pacman::p_load(tidyverse, jsonlite, rjson, data.table)
+#Clean environment
+rm(list = ls())
+
+```
+
+#Load data
+Make a loop for loading the logfiles
+```{r}
+#specifying data path
+dataPath <- 'logfiles/28-10-2020/'
+#creating a list of files
+list_files <- list.files(path = dataPath,
+                         recursive = T,
+                         pattern = "json$",
+                         full.names = T)
+# creating empty data fame with the correct column names for loop
+allData <- data.frame(matrix(ncol = 24, nrow = 0))
+x <- c("test_part", "rt", "Condition", "Condition_label", "Subject", "Chain", "Generation", "Language", "Hue_source", "Saturation_source", "Lightness_source", "Hue_matched", "Saturation_matched", "Lighness_matched", "Color_label_source", "Color_label_matched", "Language", "basic_colors", "creative_name", "Hue_color_to_name", "Saturation_color_to_name", "Lightness_color_to_name", "Color_label_naming", "responses") 
+colnames(allData) <- x
+
+# looping through all .jason files, transforming them to a dataframe with names fitting the empty dataframe above and rowbinding all files on top of eachother
+for (i in 1:length(list_files)){
+
+  filePath <- list_files[i]
+  
+  d <- jsonlite::fromJSON(filePath, flatten=T)
+  
+  d <- d %>% 
+  rename(Chain = info.chain,
+         Subject = info.subject,
+         Generation = info.generation,
+         Language = info.language,
+         Condition = info.condition,
+         Hue_source = source_color.h,
+         Saturation_source = source_color.s,
+         Lightness_source = source_color.l,
+         Hue_matched = color.h,
+         Saturation_matched = color.s,
+         Lighness_matched = color.l,
+         Color_label_matched = color.color_label,
+         Color_label_source = source_color.color_label,
+         Hue_color_to_name = color_to_name.h,
+         Saturation_color_to_name = color_to_name.s,
+         Lightness_color_to_name = color_to_name.l,
+         Color_label_naming = color_to_name.color_label) %>% 
+  mutate(Condition_label=
+    case_when(
+      Condition ==2~"Naming transmission" ,
+      Condition ==1~"Pure transmission")) %>% 
+    select(test_part, rt, Condition, Condition_label, Subject, Chain, Generation, Language, Hue_source, Saturation_source, Lightness_source, Hue_matched, Saturation_matched, Lighness_matched, Color_label_source, Color_label_matched, Language, basic_colors, creative_name, Hue_color_to_name, Saturation_color_to_name, Lightness_color_to_name, Color_label_naming, responses) 
+  
+  if (nrow(allData) == 0){
+    allData <- d
+  } else{
+    allData <- rbind(allData, d)
+  }
+  
+}
+```
+
+#Exstarcting demographics
+```{r}
+#filtering demographics
+demo <- allData %>% 
+  filter(test_part == 'demographics') %>% 
+  select(Subject, responses)
+
+#Preparing loop
+demoData <- data.frame(matrix(ncol = 6, nrow = length(demo$Subject)))
+names <- c("Subject","Vision_impairments", "Age", "Gender", "Language_spoken", "Participated_before")
+colnames(demoData) <- names
+demoData <- left_join(demo, demoData)
+
+#making a loop that extracts all the information from the demographics responses
+for (i in 1:length(demo$Subject)){
+  matrix <- str_split_fixed(demo[i,2], "\\,",5)
+  matrix2 <- str_split_fixed(matrix, "\\:",2)
+  demo_df <- as.data.frame(matrix2)
+  data_wide <- spread(demo_df, V1, V2)
+  
+  demoData[i,3] <- as.character(data_wide[1,5])
+  demoData[i,4] <- as.character(data_wide[1,1])
+  demoData[i,5] <- as.character(data_wide[1,2])
+  demoData[i,6] <- as.character(data_wide[1,3])
+  demoData[i,7] <- as.character(data_wide[1,4])
+
+  
+}  
+
+#Removing punctuations
+demoData$Vision_impairments <- gsub('[[:punct:] ]+','',demoData$Vision_impairments)
+demoData$Age <- gsub('[[:punct:] ]+','',demoData$Age)
+demoData$Gender <- gsub('[[:punct:] ]+','',demoData$Gender)
+demoData$Language_spoken <- gsub('[[:punct:] ]+','',demoData$Language_spoken)
+demoData$Participated_before <- gsub('[[:punct:] ]+','',demoData$Participated_before)
+
+#Removing responses column
+demoData <- demoData %>% select(-responses)
+
+#merge demographics with allData
+allData <- merge(allData, demoData)
+
+#fixing some rows
+fix <- allData %>% filter(Age == "no")
+fix$Age <- fix$Gender
+fix$Gender <- fix$Language_spoken
+fix$Language_spoken <- fix$Participated_before
+fix$Participated_before <- "no"
+#and replacing them 
+allData <- subset(allData, Age!="no")
+allData <- rbind(allData, fix)
+
+```
+
+#Extractin confidence ratings
+```{r}
+#Rename color labels to English
+allData <- allData %>% 
+  mutate(Color_label_matched = case_when(
+          Color_label_matched == "seed sennepsgul" ~ "seed mustard",
+          Color_label_matched == "seed græsgrøn" ~ "seed grass green",
+          Color_label_matched == "seed havblå" ~ "seed ocean blue",
+          Color_label_matched == "seed mørk rosa" ~ "seed dark rose",
+          Color_label_matched == "seed mintgrøn" ~ "seed mint green",
+          TRUE ~ Color_label_matched)) %>%
+  #subset(Color_label_matched!="seed mint green") %>% 
+  mutate(lagged_label = lag(Color_label_matched, n = 1))
+
+#filtering confidence ratings
+confidence <- allData %>% 
+  filter(test_part == 'confidence') %>% 
+  select(Subject, responses, lagged_label) %>%
+  na.omit() %>% 
+  rename(Color_label_matched = lagged_label,
+         Confidence = responses)
+
+confidence$Confidence <- str_replace_all(confidence$Confidence, "..\\bconfidence..", "")
+confidence$Confidence <- str_replace_all(confidence$Confidence, "\\}", "")
+confidence$Confidence <- as.numeric(confidence$Confidence)
+
+#removing test match
+confidence <- subset(confidence, Color_label_matched!="seed mint green")
+
+
+```
+
+#Making color matching df
+
+```{r}
+# assigning the data from the matching part to a new dataframe and selecting only relevant columns
+color_matching <- allData %>% 
+  filter(test_part == 'matching') %>% 
+  select(Subject, Language, Age, Gender, Language_spoken, rt, Condition, Condition_label,  Chain, Generation, Language, Color_label_source, Color_label_matched, Lightness_source, Lighness_matched, Saturation_source, Saturation_matched, Hue_source, Hue_matched)
+```
+
+In order to create the column with hue angle of seed- and prototypical unique colors, hue angles must be assigned. For further details about hue selections see methods section in the thesis 
+```{r}
+#Hues of each prototypical unique color 
+red <- 12.2 + 360 #added for calculation purposes
+yellow <- 62.4
+green <- 136.5
+blue <- 193.6
+
+#Hues of each seed color 
+dark_rose <- 327.55
+mustard <- 49.85
+grass_green <- 117.98
+ocean_green <- 179.34
+
+#Add unique hue and seed hue angles
+color_matching <- color_matching %>% 
+  mutate(Unique_hue = case_when(
+          Color_label_matched == "seed mustard" ~ yellow,
+          Color_label_matched == "seed grass green" ~ green,
+          Color_label_matched == "seed ocean blue" ~ blue,
+          Color_label_matched == "seed dark rose" ~ red)) %>% 
+  mutate(Seed = case_when(
+          Color_label_matched == "seed mustard" ~ mustard,
+          Color_label_matched == "seed grass green" ~ grass_green,
+          Color_label_matched == "seed ocean blue" ~ ocean_green,
+          Color_label_matched == "seed dark rose" ~ dark_rose))
+
+#removing test match
+color_matching <- subset(color_matching, Color_label_matched!="seed mint green")
+
+#As numeric
+color_matching$Seed <- as.numeric(color_matching$Seed)
+
+#Add column with difference between matched hue and unique hue and creating RHAD values and error rates:
+color_matching <- color_matching %>% 
+  mutate(
+    Dif = Unique_hue - Hue_matched,
+    RHAD = 100/(Unique_hue - Seed)*Dif,
+    Error_rate_hue = abs(Hue_source - Hue_matched),
+    Error_rate_sat = abs(Saturation_source - Saturation_matched)
+  )
+
+#Adding confidence ratings
+color_matching <- left_join(confidence, color_matching)
+
+#As factors cleaned
+color_matching$Condition <- as.factor(color_matching$Condition)
+color_matching$Chain <- as.factor(color_matching$Chain)
+color_matching$Color_label_matched <- as.factor(color_matching$Color_label_matched)
+color_matching$Gender <- as.factor(color_matching$Gender)
+color_matching$Language <- as.factor(color_matching$Language)
+
+#Writing the CSV file to directory with date of writing automatically generated
+write.csv(color_matching, file=paste("color_matching",Sys.Date(), sep = "", ".csv"))
+
+```
+
+
+#Making color naming df
+
+```{r}
+# assigning the data from the naming part to a new dataframe and selecting only relevant columns
+color_naming_df <- allData %>% 
+  filter(test_part == 'naming') %>% 
+  select(Condition_label, basic_colors, creative_name, Chain, Generation, Subject, Condition, Language, Hue_color_to_name, Saturation_color_to_name, Lightness_color_to_name, Color_label_naming, Vision_impairments, Age, Gender, Language_spoken, Participated_before) 
+
+#Writing the CSV file to directory with date of writing automatically generated
+write.csv(color_naming_df, file=paste("color_naming",Sys.Date(),sep = "", ".csv"))
+
+# creating a dataframe with information of BCTs and creaetive color names with the matching for the exploratory analysis
+naming <- color_naming_df %>% rename(Color_label_source = Color_label_naming)
+data_labeled <- merge(color_matching, naming, by = c("Color_label_source","Subject","Chain","Generation","Condition"))
+
+#Writing the CSV file to directory with date of writing automatically generated
+write.csv(data_labeled, file=paste("color_and_name",Sys.Date(),sep = "", ".csv"))
+```
+
+#Making reflective responses df
+```{r}
+# assigning the data from the feed-back part to a new dataframe and selecting only relevant columns
+d_reflect <- allData %>% 
+  filter(test_part == 'post-experiment') %>% 
+  select(responses, Subject, Language_spoken, Gender, Age)
+
+#Cleaning columns
+d_reflect$responses <- str_replace_all(d_reflect$responses, "..\\blanguage..", "") 
+d_reflect$responses <- str_replace_all(d_reflect$responses, "\\}", "") 
+d_reflect$responses <- str_replace_all(d_reflect$responses, "\\p{quotation mark}", "")
+
+##Remove empty rows
+d_reflect$responses <- as.character(d_reflect$responses)
+d_reflect$responses[d_reflect$responses==""] <- NA
+d_reflect$responses <- as.factor(d_reflect$responses)
+d_reflect <- na.omit(d_reflect)
+
+#Writing the CSV file to directory with date of writing automatically generated
+write.csv(d_reflect, file=paste("reflect",Sys.Date(),sep = "", ".csv"))
+```
+
